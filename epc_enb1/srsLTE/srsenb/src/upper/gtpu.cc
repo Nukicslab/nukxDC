@@ -30,7 +30,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#define NUK_DC 1
+#define NUK_DC true
 
 using namespace srslte;
 namespace srsenb {
@@ -103,12 +103,14 @@ bool gtpu::init(std::string gtp_bind_addr_, std::string mme_addr_, std::string x
     gtpu_log->console("Failed to bind on address %s, port %d\n", gtp_bind_addr.c_str(), GTPU_PORT);
     return false;
   }
-  
-  is_menb = true;
-  if (!init_x2u()) {
-    return false;
+#if (NUK_DC == true)
+  {
+	  is_menb = true;
+	  if (!init_x2u()) {
+		  return false;
+	  }
   }
-
+#endif
   // Setup a thread to receive packets from the src socket
   start(THREAD_PRIO);
 
@@ -348,7 +350,7 @@ void gtpu::run_thread()
 
     if(!user_exists) {
       gtpu_log->error("Unrecognized RNTI for DL PDU: 0x%x - dropping packet\n", rnti);
-#if defined (NUK_DC)
+#if (NUK_DC == true)
 	  gtpu_log->console("Unrecognized RNTI for DL PDU: 0x%x - dropping packet\n", rnti);
 	  if (!is_s1u_pdu) {
 	    gtpu_log->console("Add X2 bearer\n");
@@ -363,7 +365,7 @@ void gtpu::run_thread()
 
     if(lcid < SRSENB_N_SRB || lcid >= SRSENB_N_RADIO_BEARERS) {
       gtpu_log->error("Invalid LCID for DL PDU: %d - dropping packet\n", lcid);
-#if defined (NUK_DC)
+#if (NUK_DC == true)
       gtpu_log->console("Invalid LCID for DL PDU: %d - dropping packet\n", lcid);
 	  lcid = 3;
 #else
